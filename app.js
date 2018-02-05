@@ -41,9 +41,9 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-global.isImporting = true
-setTimeout(function () {
-    global.isImporting=false;
-}, 10000);
+// global.isImporting = true
+// setTimeout(function () {
+//     global.isImporting=false;
+// }, 10000);
 
 module.exports = app;

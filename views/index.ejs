@@ -1,11 +1,127 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-  </body>
+<head>
+  <title>文章搜索</title>
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/vuejs-paginate@latest"></script>
+  <style>
+    em {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <h1>文章搜索</h1>
+
+  <div class="col-lg-6">
+    <div class="input-group">
+      <input type="search" class="form-control" placeholder="search something..." v-model="searchKey"  @keyup.enter="searchSomething(searchKey)">
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="button" @click.prevent="searchSomething(searchKey)">Search!</button>
+      </span>
+    </div>
+  </div>
+  <div style="height: 60px;">
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div v-for="article in articles">
+
+        <div>
+          <div v-if="article.highlight.Title==null">
+            <a target="_blank" :href="'/articles/magazine/'+article._id"><h3>{{article._source.Title}}</h3></a>
+          </div>
+          <div v-else>
+            <div v-for="title in article.highlight.Title">
+              <a target="_blank" :href="'/articles/magazine/'+article._id"><h3 v-html="title"></h3></a>
+            </div>
+          </div>
+          <h5>
+            《{{article._source.MagazineName}}》{{article._source.Year}}年{{article._source.Issue}}期
+          </h5>
+        </div>
+
+        <div v-if="article.highlight.ContentB==null">
+          <p style="color: gray;">{{article._source.ContentB.substr(0, 20)}}</p>
+        </div>
+        <div v-else>
+          <div v-for="content in article.highlight.ContentB">
+            <p style="color: gray;" v-html="content.substr(0, 100)"></p>
+          </div>
+        </div>
+
+      </div>
+
+      <div v-if="articles.length>0">
+        <paginate
+                :page-count="pageCount"
+                :force-page="pageNo"
+                container-class="pagination"
+                prev-text="«"
+                next-text="»"
+                :click-handler="pageNoClick">
+        </paginate>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+    Vue.component('paginate', VuejsPaginate)
+    var app = new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                searchKey: '',
+                articles: [],
+                pageNo: 0,
+                pageCount: 1
+            }
+        },
+        created: function () {
+            this.searchKey = this.getUrlKey('key') || ''
+            if(this.searchKey!=''){
+                this.searchSomething(this.searchKey)
+            }
+        },
+        methods: {
+            searchSomething (str) {
+                var that = this
+                axios.get(`/search?key=${str}&page=${this.getUrlKey('page') || 0}`)
+                    .then(function (response) {
+                        console.log(response);
+                        that.pageNo = (that.getUrlKey('page') || 0)
+                        that.pageCount = Math.ceil(response.data.total / 20)
+                        that.articles = response.data.hits;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            getUrlKey (name) {
+                return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.href) || ['', ''])[1].replace(/\+/g, '%20')) || null
+            },
+            pageNoClick: function (pageNum) {
+                var that = this
+                axios.get(`/search?key=${this.searchKey}&page=${pageNum - 1}`)
+                    .then(function (response) {
+                        console.log(response);
+                        that.pageNo = pageNum - 1
+                        that.pageCount = Math.ceil(response.data.total / 20)
+                        that.articles = response.data.hits;
+                        document.body.scrollTop = document.documentElement.scrollTop = 0;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            }
+        }
+    })
+</script>
+</body>
 </html>
