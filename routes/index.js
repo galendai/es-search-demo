@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var article = require('../db/article');
+var CryptoJS = require("crypto-js");
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -49,6 +50,9 @@ router.get('/search', function(req, res, next) {
 });
 
 router.get('/articles/magazine/:tid', function(req, res, next) {
+
+    var key = 'DSEPUB86'
+
     const query = `select * from MagazineArticle where TitleID='${req.params.tid}'`
     article.seq.query(query).then((result) => {
         var data = result[0][0];
@@ -56,9 +60,25 @@ router.get('/articles/magazine/:tid', function(req, res, next) {
             title: data.Title,
             magazineName: `《${data.MagazineName}》`,
             issue: `${data.Year}年${data.Issue}期`,
-            content: data.ContentB
+            content: decryptByDESModeCBC(data.Content, key).replace(/src=\"\/qkimages/g, 'src="http://img1.qikan.com/qkimages')
         });
     })
 });
+
+
+function decryptByDESModeCBC(ciphertext,key) {
+    var keyHex = CryptoJS.enc.Utf8.parse(key);
+    var ivHex = CryptoJS.enc.Utf8.parse(key);
+
+    var decrypted = CryptoJS.DES.decrypt(ciphertext, keyHex, {
+        iv:ivHex,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+    });
+    var result = decrypted.toString(CryptoJS.enc.Utf8);
+
+
+    return result;
+}
 
 module.exports = router;

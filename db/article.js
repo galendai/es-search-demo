@@ -3,7 +3,13 @@ const Op = require('sequelize').Op
 const operatorsAliases = {}
 const es = require('elasticsearch');
 
-const sequelize = new Sequelize('mssql://dragon:dragon@192.168.0.5:1433/DragonISS', { operatorsAliases,logging:false });
+const sequelize = new Sequelize('mssql://dragon:dragon@192.168.0.5:1433/DragonISS', {
+    operatorsAliases,logging:false,
+    dialectOptions:{
+        requestTimeout: 999999,
+        // instanceName:'DEV'
+    }  //设置MSSQL超时时间
+});
 var username = 'kibana'
 var password = 'bG&kLHEPz1uLegzkoYPk'
 const client = new es.Client({
@@ -12,96 +18,123 @@ const client = new es.Client({
     // log: 'trace'
 });
 
+var CryptoJS = require("crypto-js");
+
 const test = async function () {
 
-    // const query = `SELECT * FROM (
-    //     SELECT *, ROW_NUMBER()
-    //     OVER (ORDER BY MagazineArticleID) AS RowNumberForSplit
-    //     FROM  MagazineArticle) temp
-    //     WHERE RowNumberForSplit BETWEEN ${ 0 } AND ${ 1 }`
-    //
-    // var data = await sequelize.query(query);
-    //
-    // console.log(data)
-    client.indices.create({
-        index: 'articles',
-        body: {
-            mappings: {
-                magazine: {
-                    properties: {
-                        TitleID: {
-                            type: "text",
-                            analyzer: "ik_smart",
-                            search_analyzer: "ik_smart"
-                        },
-                        MagazineArticleID: {
-                            type: "text",
-                            analyzer: "ik_smart",
-                            search_analyzer: "ik_smart"
-                        },
-                        Title: {
-                            type: "text",
-                            analyzer: "ik_smart",
-                            search_analyzer: "ik_smart"
-                        },
-                        ContentB: {
-                            type: "text",
-                            analyzer: "ik_smart",
-                            search_analyzer: "ik_smart"
-                        },
-                    }
-                }
-            }
-        }
-    });
+    const query = `SELECT * FROM (
+        SELECT *, ROW_NUMBER()
+        OVER (ORDER BY MagazineArticleID) AS RowNumberForSplit
+        FROM  MagazineArticle) temp
+        WHERE RowNumberForSplit BETWEEN ${ 70000 } AND ${ 70000 }`
 
-    var ping = await client.ping({
-        requestTimeout: 1000
-    });
-    if (!ping) {
-        console.log('elasticsearch cluster is down!');
-    } else {
-        console.log('elasticsearch is well');
-    }
-    var count = (await client.count()).count;
-    var count_has = await countMagazineArticlesAsync();
-    console.log(`indexed:${count}/${count_has}`);
-    if (count!=count_has){
-        console.log('update...')
-    }
-    var articles = await magazineArticlesAsync();
-    await save(articles[0]);
-    setTimeout(async function () {
-        var count = (await client.count()).count;
-        var count_has = await countMagazineArticlesAsync();
-        console.log(`indexed:${count}/${count_has}`);
+    console.log(new Date())
+    var sqldata = await sequelize.query(query);
+    console.log(new Date())
 
-        var sr = await client.search({
-            index:'articles',
-            type:'magazine',
-            body: {
-                query: {
-                    multi_match: {
-                        minimum_should_match: "10%",
-                        query: "几秒钟 欧盟",
-                        fields: [
-                            "Title",
-                            "ContentB"
-                        ]
-                    }
-                },
-                highlight: {
-                    fields: {
-                        Title: { },
-                        ContentB: { }
-                    }
-                }
-            }
+    var data = sqldata[0][0].Content;
+
+   // console.log(new Base64().decode(data))
+
+    var key = 'DSEPUB86'
+
+    console.log(decryptByDESModeCBC(data,key))
+    process.exit()
+
+    function decryptByDESModeCBC(ciphertext,key) {
+        var keyHex = CryptoJS.enc.Utf8.parse(key);
+        var ivHex = CryptoJS.enc.Utf8.parse(key);
+
+        var decrypted = CryptoJS.DES.decrypt(ciphertext, keyHex, {
+            iv:ivHex,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7
         });
-        console.log(sr.hits);
+        var result = decrypted.toString(CryptoJS.enc.Utf8);
 
-        process.exit();
-    },3000);
+
+        return result;
+    }
+
+    // client.indices.create({
+    //     index: 'articles',
+    //     body: {
+    //         mappings: {
+    //             magazine: {
+    //                 properties: {
+    //                     TitleID: {
+    //                         type: "text",
+    //                         analyzer: "ik_smart",
+    //                         search_analyzer: "ik_smart"
+    //                     },
+    //                     MagazineArticleID: {
+    //                         type: "text",
+    //                         analyzer: "ik_smart",
+    //                         search_analyzer: "ik_smart"
+    //                     },
+    //                     Title: {
+    //                         type: "text",
+    //                         analyzer: "ik_smart",
+    //                         search_analyzer: "ik_smart"
+    //                     },
+    //                     ContentB: {
+    //                         type: "text",
+    //                         analyzer: "ik_smart",
+    //                         search_analyzer: "ik_smart"
+    //                     },
+    //                 }
+    //             }
+    //         }
+    //     }
+    // });
+    //
+    // var ping = await client.ping({
+    //     requestTimeout: 1000
+    // });
+    // if (!ping) {
+    //     console.log('elasticsearch cluster is down!');
+    // } else {
+    //     console.log('elasticsearch is well');
+    // }
+    // var count = (await client.count()).count;
+    // var count_has = await countMagazineArticlesAsync();
+    // console.log(`indexed:${count}/${count_has}`);
+    // if (count!=count_has){
+    //     console.log('update...')
+    // }
+    // var articles = await magazineArticlesAsync();
+    // await save(articles[0]);
+    // setTimeout(async function () {
+    //     var count = (await client.count()).count;
+    //     var count_has = await countMagazineArticlesAsync();
+    //     console.log(`indexed:${count}/${count_has}`);
+    //
+    //     var sr = await client.search({
+    //         index:'articles',
+    //         type:'magazine',
+    //         body: {
+    //             query: {
+    //                 multi_match: {
+    //                     minimum_should_match: "10%",
+    //                     query: "几秒钟 欧盟",
+    //                     fields: [
+    //                         "Title",
+    //                         "ContentB"
+    //                     ]
+    //                 }
+    //             },
+    //             highlight: {
+    //                 fields: {
+    //                     Title: { },
+    //                     ContentB: { }
+    //                 }
+    //             }
+    //         }
+    //     });
+    //     console.log(sr.hits);
+    //
+    //     process.exit();
+    // },3000);
 }
 
 const countMagazineArticlesAsync = async function () {
@@ -125,62 +158,71 @@ const magazineArticlesAsync = async function (page = 1) {
 
 const save = async function (docs) {
     for (const doc of docs) {
-        var exists = await client.exists({
-            index:'articles',
-            type:'magazine',
-            id:doc.TitleID
-        });
-        if(exists){
-            await client.update({
+        try {
+            var exists = await client.exists({
                 index:'articles',
                 type:'magazine',
-                id:doc.TitleID,
-                body:doc,
-            })
-        }else {
-            await client.create({
-                index:'articles',
-                type:'magazine',
-                id:doc.TitleID,
-                body:doc,
-            })
+                id:doc.TitleID
+            });
+            if(exists){
+                await client.update({
+                    index: 'articles',
+                    type: 'magazine',
+                    id: doc.TitleID,
+                    body:{
+                        doc: doc
+                    },
+                })
+            }else {
+                await client.create({
+                    index: 'articles',
+                    type: 'magazine',
+                    id: doc.TitleID,
+                    body: doc,
+                })
+            }
+        } catch (err) {
+            console.log(err)
         }
     }
 }
 
 const importer = async function () {
 
-    client.indices.create({
-        index: 'articles',
-        body: {
-            mappings: {
-                magazine: {
-                    properties: {
-                        TitleID: {
-                            type: "text",
-                            analyzer: "ik_smart",
-                            search_analyzer: "ik_smart"
-                        },
-                        MagazineArticleID: {
-                            type: "text",
-                            analyzer: "ik_smart",
-                            search_analyzer: "ik_smart"
-                        },
-                        Title: {
-                            type: "text",
-                            analyzer: "ik_smart",
-                            search_analyzer: "ik_smart"
-                        },
-                        ContentB: {
-                            type: "text",
-                            analyzer: "ik_smart",
-                            search_analyzer: "ik_smart"
-                        },
+    var isIndexExists = await client.indices.exists({index: 'articles'});
+    if(!isIndexExists){
+        client.indices.create({
+            index: 'articles',
+            body: {
+                mappings: {
+                    magazine: {
+                        properties: {
+                            TitleID: {
+                                type: "text",
+                                analyzer: "ik_smart",
+                                search_analyzer: "ik_smart"
+                            },
+                            MagazineArticleID: {
+                                type: "text",
+                                analyzer: "ik_smart",
+                                search_analyzer: "ik_smart"
+                            },
+                            Title: {
+                                type: "text",
+                                analyzer: "ik_smart",
+                                search_analyzer: "ik_smart"
+                            },
+                            ContentB: {
+                                type: "text",
+                                analyzer: "ik_smart",
+                                search_analyzer: "ik_smart"
+                            },
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 
     try {
         await sequelize
@@ -196,7 +238,7 @@ const importer = async function () {
         return
     }
 
-    const limit = 100
+    const limit = 10000
 
     const magazineArticles = function (page = 1) {
         const start = ((page - 1) * limit) + 1
