@@ -265,13 +265,33 @@ const importer = async function () {
     const limit = 10000
 
     const magazineArticles = function (page = 1) {
-        const start = ((page - 1) * limit) + 1
-        const end = (start + limit) - 1
-        const query = `SELECT * FROM (
-        SELECT [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue], ROW_NUMBER() 
-        OVER (ORDER BY MagazineArticleID) AS RowNumberForSplit 
-        FROM  MagazineArticle) temp 
-        WHERE RowNumberForSplit BETWEEN ${ start } AND ${ end }`
+        const start = ((page - 1) * limit) //+ 1
+        // const end = (start + limit) - 1
+        var query = ''
+        if (page==1){
+            query = `
+            SELECT TOP ${limit} [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue]
+            FROM [MagazineArticle] ORDER BY [MagazineArticleID] DESC
+            `
+        }else {
+            query = `
+                SELECT 
+                TOP ${limit} 
+                [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue]
+                FROM [MagazineArticle]
+                where [MagazineArticleID] < (SELECT MIN([MagazineArticleID]) FROM (SELECT TOP ${start} [MagazineArticleID] 
+                              FROM [MagazineArticle] 
+                              ORDER BY [MagazineArticleID] DESC
+                                ) AS T
+                       )
+                ORDER BY [MagazineArticleID] DESC
+            `
+        }
+        // const query = `SELECT * FROM (
+        // SELECT [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue], ROW_NUMBER()
+        // OVER (ORDER BY MagazineArticleID) AS RowNumberForSplit
+        // FROM  MagazineArticle) temp
+        // WHERE RowNumberForSplit BETWEEN ${ start } AND ${ end }`
 
         return sequelize.query(query)
     }
