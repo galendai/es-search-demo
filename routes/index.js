@@ -34,7 +34,11 @@ router.get('/search', function(req, res, next) {
             highlight: {
                 fields: {
                     Title: { },
-                    ContentB: { }
+                    ContentB: {
+                        type:"plain",
+                        fragment_size: 100,
+                        number_of_fragments: 5
+                    }
                 }
             },
             size: 20,

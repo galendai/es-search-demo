@@ -47,7 +47,7 @@
         </div>
 
         <div v-if="article.highlight.ContentB==null">
-          <p style="color: gray;">{{article._source.ContentB.substr(0, 20)}}</p>
+          <p style="color: gray;">{{article._source.ContentB.substr(0, 100)}}</p>
         </div>
         <div v-else>
           <div v-for="content in article.highlight.ContentB">

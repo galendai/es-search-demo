@@ -22,15 +22,29 @@ var CryptoJS = require("crypto-js");
 
 const test = async function () {
 
-    const query = `SELECT * FROM (
-        SELECT *, ROW_NUMBER()
-        OVER (ORDER BY MagazineArticleID) AS RowNumberForSplit
-        FROM  MagazineArticle) temp
-        WHERE RowNumberForSplit BETWEEN ${ 70000 } AND ${ 70000 }`
+    // const query = `SELECT * FROM (
+    //     SELECT *, ROW_NUMBER()
+    //     OVER (ORDER BY MagazineArticleID) AS RowNumberForSplit
+    //     FROM  MagazineArticle) temp
+    //     WHERE RowNumberForSplit BETWEEN ${ 70000 } AND ${ 70000 }`
+
+    const  query = `
+    SELECT 
+    TOP 1 
+    *
+    FROM [MagazineArticle]
+    where [MagazineArticleID] < (SELECT MIN([MagazineArticleID]) FROM (SELECT TOP 1270000 [MagazineArticleID] 
+                  FROM [MagazineArticle] 
+                  ORDER BY [MagazineArticleID] DESC
+                    ) AS T
+           )
+    ORDER BY [MagazineArticleID] DESC
+    `
 
     console.log(new Date())
     var sqldata = await sequelize.query(query);
     console.log(new Date())
+    console.log(sqldata)
 
     var data = sqldata[0][0].Content;
 
@@ -196,26 +210,36 @@ const importer = async function () {
             body: {
                 mappings: {
                     magazine: {
+                        // "_source": {
+                        //     "enabled": false
+                        // },
                         properties: {
                             TitleID: {
                                 type: "text",
-                                analyzer: "ik_smart",
-                                search_analyzer: "ik_smart"
                             },
                             MagazineArticleID: {
                                 type: "text",
-                                analyzer: "ik_smart",
-                                search_analyzer: "ik_smart"
                             },
                             Title: {
                                 type: "text",
+                                // "store": true,
                                 analyzer: "ik_smart",
-                                search_analyzer: "ik_smart"
+                                search_analyzer: "ik_smart",
                             },
                             ContentB: {
                                 type: "text",
+                                // "store": true,
                                 analyzer: "ik_smart",
-                                search_analyzer: "ik_smart"
+                                search_analyzer: "ik_smart",
+                            },
+                            MagazineName: {
+                                type: "text",
+                            },
+                            Year: {
+                                type: "text",
+                            },
+                            Issue: {
+                                type: "text",
                             },
                         }
                     }
