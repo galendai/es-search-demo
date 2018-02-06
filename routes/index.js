@@ -60,11 +60,17 @@ router.get('/articles/magazine/:tid', function(req, res, next) {
     const query = `select * from MagazineArticle where TitleID='${req.params.tid}'`
     article.seq.query(query).then((result) => {
         var data = result[0][0];
+        var content = '';
+        if(data.ContentB==null){
+            content = data.Content.replace(/src=\"\/qkimages/g, 'src="http://img1.qikan.com/qkimages');
+        }else {
+            content = decryptByDESModeCBC(data.Content, key).replace(/src=\"\/qkimages/g, 'src="http://img1.qikan.com/qkimages')
+        }
         res.render('article', {
             title: data.Title,
             magazineName: `《${data.MagazineName}》`,
             issue: `${data.Year}年${data.Issue}期`,
-            content: decryptByDESModeCBC(data.Content, key).replace(/src=\"\/qkimages/g, 'src="http://img1.qikan.com/qkimages')
+            content: content
         });
     })
 });

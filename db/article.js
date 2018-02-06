@@ -173,6 +173,9 @@ const magazineArticlesAsync = async function (page = 1) {
 const save = async function (docs) {
     for (const doc of docs) {
         try {
+            // if (doc.ContentB==null && doc.Content!=null){
+            //     doc.ContentB = doc.Content;
+            // }
             var exists = await client.exists({
                 index:'articles',
                 type:'magazine',
@@ -184,7 +187,15 @@ const save = async function (docs) {
                     type: 'magazine',
                     id: doc.TitleID,
                     body:{
-                        doc: doc
+                        doc: {
+                            TitleID: doc.TitleID,
+                            MagazineArticleID: doc.MagazineArticleID,
+                            Title: doc.Title,
+                            ContentB: doc.ContentB,
+                            MagazineName: doc.MagazineName,
+                            Year: doc.Year,
+                            Issue: doc.Issue,
+                        }
                     },
                 })
             }else {
@@ -192,7 +203,15 @@ const save = async function (docs) {
                     index: 'articles',
                     type: 'magazine',
                     id: doc.TitleID,
-                    body: doc,
+                    body: {
+                        TitleID: doc.TitleID,
+                        MagazineArticleID: doc.MagazineArticleID,
+                        Title: doc.Title,
+                        ContentB: doc.ContentB,
+                        MagazineName: doc.MagazineName,
+                        Year: doc.Year,
+                        Issue: doc.Issue,
+                    },
                 })
             }
         } catch (err) {
@@ -265,33 +284,33 @@ const importer = async function () {
     const limit = 10000
 
     const magazineArticles = function (page = 1) {
-        const start = ((page - 1) * limit) //+ 1
-        // const end = (start + limit) - 1
-        var query = ''
-        if (page==1){
-            query = `
-            SELECT TOP ${limit} [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue]
-            FROM [MagazineArticle] ORDER BY [MagazineArticleID] DESC
-            `
-        }else {
-            query = `
-                SELECT 
-                TOP ${limit} 
-                [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue]
-                FROM [MagazineArticle]
-                where [MagazineArticleID] < (SELECT MIN([MagazineArticleID]) FROM (SELECT TOP ${start} [MagazineArticleID] 
-                              FROM [MagazineArticle] 
-                              ORDER BY [MagazineArticleID] DESC
-                                ) AS T
-                       )
-                ORDER BY [MagazineArticleID] DESC
-            `
-        }
-        // const query = `SELECT * FROM (
-        // SELECT [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue], ROW_NUMBER()
-        // OVER (ORDER BY MagazineArticleID) AS RowNumberForSplit
-        // FROM  MagazineArticle) temp
-        // WHERE RowNumberForSplit BETWEEN ${ start } AND ${ end }`
+        const start = ((page - 1) * limit) + 1
+        const end = (start + limit) - 1
+        // var query = ''
+        // if (page==1){
+        //     query = `
+        //     SELECT TOP ${limit} [TitleID], [MagazineArticleID], [Title], [ContentB], [Content], [MagazineName], [Year], [Issue]
+        //     FROM [MagazineArticle] ORDER BY [MagazineArticleID] DESC
+        //     `
+        // }else {
+        //     query = `
+        //         SELECT
+        //         TOP ${limit}
+        //         [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue]
+        //         FROM [MagazineArticle]
+        //         where [MagazineArticleID] < (SELECT MIN([MagazineArticleID]) FROM (SELECT TOP ${start} [MagazineArticleID]
+        //                       FROM [MagazineArticle]
+        //                       ORDER BY [MagazineArticleID] DESC
+        //                         ) AS T
+        //                )
+        //         ORDER BY [MagazineArticleID] DESC
+        //     `
+        // }
+        const query = `SELECT * FROM (
+        SELECT [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue], ROW_NUMBER()
+        OVER (ORDER BY MagazineArticleID) AS RowNumberForSplit
+        FROM  MagazineArticle) temp
+        WHERE RowNumberForSplit BETWEEN ${ start } AND ${ end }`
 
         return sequelize.query(query)
     }
@@ -310,14 +329,14 @@ const importer = async function () {
     console.log('@分页数:', page)
 
     for (let i = 1; i <= page; i += 1) {
-        console.log(`\n开始处理第 ${ i } 页...`)
+        console.log(`开始处理第 ${ i } 页...`)
         try {
             const res = await magazineArticles(i)
             await save(res[0])
         } catch (err) {
             console.log(err)
         }
-        console.log(`    第 ${ i } 页处理完毕\n`)
+        console.log(`第 ${ i } 页处理完毕`)
     }
 
     console.log('\n\n@End\n\n')
