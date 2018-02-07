@@ -32,8 +32,8 @@ router.get('/search', function(req, res, next) {
                 multi_match: {
                     query: key,
                     fields: [
-                        "Title^1",
-                        "ContentB^1.33"
+                        "Title^1.2",
+                        "ContentB^1"
                     ]
                 }
             },

@@ -407,7 +407,8 @@ const importer = async function () {
         console.log(`第 ${ i } 页处理完毕`)
     }
 
-    console.log('\n\n@End\n\n')
+    console.log('@End')
+    process.exit();
 }
 
 module.exports.seq = sequelize
