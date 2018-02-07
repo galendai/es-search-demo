@@ -235,6 +235,20 @@ const save = async function (docs) {
 
 const importer = async function () {
 
+    try {
+        await sequelize
+            .authenticate()
+            .then(() => {
+                console.log('Connection has been established successfully.')
+            })
+            .catch((err) => {
+                console.error('Unable to connect to the database:', err)
+            })
+    } catch (err) {
+        console.log(err)
+        return
+    }
+
     for (var y=1990;y<=2020;y++){
         var isIndexExists = await client.indices.exists({index: `articles-${y}`});
         if(!isIndexExists){
@@ -325,20 +339,6 @@ const importer = async function () {
                 }
             }
         });
-    }
-
-    try {
-        await sequelize
-            .authenticate()
-            .then(() => {
-                console.log('Connection has been established successfully.')
-            })
-            .catch((err) => {
-                console.error('Unable to connect to the database:', err)
-            })
-    } catch (err) {
-        console.log(err)
-        return
     }
 
     const limit = 10000
