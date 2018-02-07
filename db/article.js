@@ -41,34 +41,41 @@ const test = async function () {
     ORDER BY [MagazineArticleID] DESC
     `
 
-    console.log(new Date())
     var sqldata = await sequelize.query(query);
-    console.log(new Date())
-    console.log(sqldata)
 
-    var data = sqldata[0][0].Content;
+    if(sqldata[0][0].ContentB==null){
+        var ccc = sqldata[0][0].Content;
+        ccc=ccc.replace(/<[^>]*>|/g,"")
+            .replace(/[\ |\~|\`|\!|\@|\#|\$|\%|\^|\&|\*|\(|\)|\-|\_|\+|\=|\||\\|\[|\]|\{|\}|\;|\:|\"|\'|\,|\<|\.|\>|\/|\?|\，|\。|\：|\“|\？|\”|\！|\（|\）|\；]/g,"")
+            .replace(/\s/g, "").replace(/\r/g, "").replace(/\n/g, "");
+        console.log(ccc);
+
+        process.exit();
+    }
+
+    // var data = sqldata[0][0].Content;
 
    // console.log(new Base64().decode(data))
 
-    var key = 'DSEPUB86'
-
-    console.log(decryptByDESModeCBC(data,key))
-    process.exit()
-
-    function decryptByDESModeCBC(ciphertext,key) {
-        var keyHex = CryptoJS.enc.Utf8.parse(key);
-        var ivHex = CryptoJS.enc.Utf8.parse(key);
-
-        var decrypted = CryptoJS.DES.decrypt(ciphertext, keyHex, {
-            iv:ivHex,
-            mode: CryptoJS.mode.CBC,
-            padding: CryptoJS.pad.Pkcs7
-        });
-        var result = decrypted.toString(CryptoJS.enc.Utf8);
-
-
-        return result;
-    }
+    // var key = 'DSEPUB86'
+    //
+    // console.log(decryptByDESModeCBC(data,key))
+    // process.exit()
+    //
+    // function decryptByDESModeCBC(ciphertext,key) {
+    //     var keyHex = CryptoJS.enc.Utf8.parse(key);
+    //     var ivHex = CryptoJS.enc.Utf8.parse(key);
+    //
+    //     var decrypted = CryptoJS.DES.decrypt(ciphertext, keyHex, {
+    //         iv:ivHex,
+    //         mode: CryptoJS.mode.CBC,
+    //         padding: CryptoJS.pad.Pkcs7
+    //     });
+    //     var result = decrypted.toString(CryptoJS.enc.Utf8);
+    //
+    //
+    //     return result;
+    // }
 
     // client.indices.create({
     //     index: 'articles',
@@ -173,9 +180,11 @@ const magazineArticlesAsync = async function (page = 1) {
 const save = async function (docs) {
     for (const doc of docs) {
         try {
-            // if (doc.ContentB==null && doc.Content!=null){
-            //     doc.ContentB = doc.Content;
-            // }
+            if (doc.ContentB==null && doc.Content!=null){
+                doc.ContentB = doc.Content.replace(/<[^>]*>|/g,"")
+                    .replace(/[\ |\~|\`|\!|\@|\#|\$|\%|\^|\&|\*|\(|\)|\-|\_|\+|\=|\||\\|\[|\]|\{|\}|\;|\:|\"|\'|\,|\<|\.|\>|\/|\?|\，|\。|\：|\“|\？|\”|\！|\（|\）|\；]/g,"")
+                    .replace(/\s/g, "").replace(/\r/g, "").replace(/\n/g, "");
+            }
             var exists = await client.exists({
                 index:'articles',
                 type:'magazine',
