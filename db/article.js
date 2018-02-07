@@ -28,30 +28,30 @@ const test = async function () {
     //     FROM  MagazineArticle) temp
     //     WHERE RowNumberForSplit BETWEEN ${ 70000 } AND ${ 70000 }`
 
-    const  query = `
-    SELECT 
-    TOP 1 
-    *
-    FROM [MagazineArticle]
-    where [MagazineArticleID] < (SELECT MIN([MagazineArticleID]) FROM (SELECT TOP 1270000 [MagazineArticleID] 
-                  FROM [MagazineArticle] 
-                  ORDER BY [MagazineArticleID] DESC
-                    ) AS T
-           )
-    ORDER BY [MagazineArticleID] DESC
-    `
-
-    var sqldata = await sequelize.query(query);
-
-    if(sqldata[0][0].ContentB==null){
-        var ccc = sqldata[0][0].Content;
-        ccc=ccc.replace(/<[^>]*>|/g,"")
-            .replace(/[\ |\~|\`|\!|\@|\#|\$|\%|\^|\&|\*|\(|\)|\-|\_|\+|\=|\||\\|\[|\]|\{|\}|\;|\:|\"|\'|\,|\<|\.|\>|\/|\?|\，|\。|\：|\“|\？|\”|\！|\（|\）|\；]/g,"")
-            .replace(/\s/g, "").replace(/\r/g, "").replace(/\n/g, "");
-        console.log(ccc);
-
-        process.exit();
-    }
+    // const  query = `
+    // SELECT
+    // TOP 1
+    // *
+    // FROM [MagazineArticle]
+    // where [MagazineArticleID] < (SELECT MIN([MagazineArticleID]) FROM (SELECT TOP 1270000 [MagazineArticleID]
+    //               FROM [MagazineArticle]
+    //               ORDER BY [MagazineArticleID] DESC
+    //                 ) AS T
+    //        )
+    // ORDER BY [MagazineArticleID] DESC
+    // `
+    //
+    // var sqldata = await sequelize.query(query);
+    //
+    // if(sqldata[0][0].ContentB==null){
+    //     var ccc = sqldata[0][0].Content;
+    //     ccc=ccc.replace(/<[^>]*>|/g,"")
+    //         .replace(/[\ |\~|\`|\!|\@|\#|\$|\%|\^|\&|\*|\(|\)|\-|\_|\+|\=|\||\\|\[|\]|\{|\}|\;|\:|\"|\'|\,|\<|\.|\>|\/|\?|\，|\。|\：|\“|\？|\”|\！|\（|\）|\；]/g,"")
+    //         .replace(/\s/g, "").replace(/\r/g, "").replace(/\n/g, "");
+    //     console.log(ccc);
+    //
+    //     process.exit();
+    // }
 
     // var data = sqldata[0][0].Content;
 
@@ -185,14 +185,18 @@ const save = async function (docs) {
                     .replace(/[\ |\~|\`|\!|\@|\#|\$|\%|\^|\&|\*|\(|\)|\-|\_|\+|\=|\||\\|\[|\]|\{|\}|\;|\:|\"|\'|\,|\<|\.|\>|\/|\?|\，|\。|\：|\“|\？|\”|\！|\（|\）|\；]/g,"")
                     .replace(/\s/g, "").replace(/\r/g, "").replace(/\n/g, "");
             }
+            var indexd = 'articles-old'
+            if (doc.Year>=1990){
+                indexd = `articles-${doc.Year}`
+            }
             var exists = await client.exists({
-                index:'articles',
+                index:indexd,
                 type:'magazine',
                 id:doc.TitleID
             });
             if(exists){
                 await client.update({
-                    index: 'articles',
+                    index: indexd,
                     type: 'magazine',
                     id: doc.TitleID,
                     body:{
@@ -209,7 +213,7 @@ const save = async function (docs) {
                 })
             }else {
                 await client.create({
-                    index: 'articles',
+                    index: indexd,
                     type: 'magazine',
                     id: doc.TitleID,
                     body: {
@@ -231,10 +235,57 @@ const save = async function (docs) {
 
 const importer = async function () {
 
-    var isIndexExists = await client.indices.exists({index: 'articles'});
-    if(!isIndexExists){
+    for (var y=1990;y<=2020;y++){
+        var isIndexExists = await client.indices.exists({index: `articles-${y}`});
+        if(!isIndexExists){
+            client.indices.create({
+                index: `articles-${y}`,
+                body: {
+                    mappings: {
+                        magazine: {
+                            // "_source": {
+                            //     "enabled": false
+                            // },
+                            properties: {
+                                TitleID: {
+                                    type: "text",
+                                },
+                                MagazineArticleID: {
+                                    type: "text",
+                                },
+                                Title: {
+                                    type: "text",
+                                    // "store": true,
+                                    analyzer: "ik_smart",
+                                    search_analyzer: "ik_smart",
+                                },
+                                ContentB: {
+                                    type: "text",
+                                    // "store": true,
+                                    analyzer: "ik_smart",
+                                    search_analyzer: "ik_smart",
+                                },
+                                MagazineName: {
+                                    type: "text",
+                                },
+                                Year: {
+                                    type: "text",
+                                },
+                                Issue: {
+                                    type: "text",
+                                },
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    var isIndexExistsOld = await client.indices.exists({index: `articles-old`});
+    if(!isIndexExistsOld){
         client.indices.create({
-            index: 'articles',
+            index: 'articles-old',
             body: {
                 mappings: {
                     magazine: {
@@ -339,7 +390,7 @@ const importer = async function () {
     console.log('@数据量:', total)
     console.log('@分页数:', page)
 
-    for (let i = 1; i <= page; i += 1) {
+    for (let i = 1; i <= 1; i += 1) {
         console.log(`开始处理第 ${ i } 页...`)
         try {
             const res = await magazineArticles(i)
