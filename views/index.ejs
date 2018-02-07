@@ -5,8 +5,8 @@
   <link rel='stylesheet' href='/stylesheets/style.css' />
   <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <script src="https://cdn.jsdelivr.net/npm/vue"></script>
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-  <script src="https://unpkg.com/vuejs-paginate@latest"></script>
+  <script src="https://cdn.bootcss.com/axios/0.17.1/axios.min.js"></script>
+  <script src="https://unpkg.com/vuejs-paginate@1.6.0/dist/index.js"></script>
   <style>
     em {
       color: red;
@@ -17,7 +17,13 @@
 <div id="app">
   <div class="container">
 
-    <h1>文章搜索</h1>
+    <div>
+      <h1>文章搜索
+        <template v-if="totalCount>0">
+          <small>共索引文章 {{totalCount}} 篇</small>
+        </template>
+      </h1>
+    </div>
 
     <div class="row">
       <div class="col-lg-12">
@@ -95,7 +101,8 @@
                 articles: new Object(),
                 pageNo: 0,
                 pageCount: 1,
-                isLoading: false
+                isLoading: false,
+                totalCount: 0
             }
         },
         created: function () {
@@ -104,6 +111,17 @@
             if(this.searchKey!=''){
                 this.searchSomething(this.searchKey)
             }
+        },
+        mounted: function () {
+            var that = this
+            axios.get(`/articles/magazine/_count`)
+                .then(function (response) {
+                    console.log(response);
+                    that.totalCount = response.data.count;
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
         },
         methods: {
             searchSomething (str) {

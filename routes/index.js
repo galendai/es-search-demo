@@ -8,6 +8,15 @@ router.get('/', function(req, res, next) {
     res.render('index', { title: 'hello' });
 });
 
+router.get('/articles/magazine/_count', function(req, res, next) {
+    article.es.count({
+        index: 'articles-*'
+    }, function (error, response) {
+        var count = response.count;
+        res.json({count: count});
+    });
+});
+
 router.get('/search', function(req, res, next) {
     var page = req.query.page
     if(page==null){
