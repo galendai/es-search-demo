@@ -250,49 +250,54 @@ const importer = async function () {
     }
 
     for (var y=1990;y<=2020;y++){
-        var isIndexExists = await client.indices.exists({index: `articles-${y}`});
-        if(!isIndexExists){
-            client.indices.create({
-                index: `articles-${y}`,
-                body: {
-                    mappings: {
-                        magazine: {
-                            // "_source": {
-                            //     "enabled": false
-                            // },
-                            properties: {
-                                TitleID: {
-                                    type: "text",
-                                },
-                                MagazineArticleID: {
-                                    type: "text",
-                                },
-                                Title: {
-                                    type: "text",
-                                    // "store": true,
-                                    analyzer: "ik_smart",
-                                    search_analyzer: "ik_smart",
-                                },
-                                ContentB: {
-                                    type: "text",
-                                    // "store": true,
-                                    analyzer: "ik_smart",
-                                    search_analyzer: "ik_smart",
-                                },
-                                MagazineName: {
-                                    type: "text",
-                                },
-                                Year: {
-                                    type: "text",
-                                },
-                                Issue: {
-                                    type: "text",
-                                },
+        try {
+            var isIndexExists = await client.indices.exists({index: `articles-${y}`});
+            if(!isIndexExists){
+                client.indices.create({
+                    index: `articles-${y}`,
+                    body: {
+                        mappings: {
+                            magazine: {
+                                // "_source": {
+                                //     "enabled": false
+                                // },
+                                properties: {
+                                    TitleID: {
+                                        type: "text",
+                                    },
+                                    MagazineArticleID: {
+                                        type: "text",
+                                    },
+                                    Title: {
+                                        type: "text",
+                                        // "store": true,
+                                        analyzer: "ik_smart",
+                                        search_analyzer: "ik_smart",
+                                    },
+                                    ContentB: {
+                                        type: "text",
+                                        // "store": true,
+                                        analyzer: "ik_smart",
+                                        search_analyzer: "ik_smart",
+                                    },
+                                    MagazineName: {
+                                        type: "text",
+                                    },
+                                    Year: {
+                                        type: "text",
+                                    },
+                                    Issue: {
+                                        type: "text",
+                                    },
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
+        } catch (err) {
+            console.log(err)
+            return
         }
     }
 
