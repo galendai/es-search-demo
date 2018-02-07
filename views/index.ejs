@@ -46,16 +46,21 @@
           </h5>
         </div>
 
-        <div v-if="article.highlight.ContentB==null">
-          <div v-if="article._source.ContentB!=null">
-            <p style="color: gray;">{{article._source.ContentB.substr(0, 100)}}</p>
-          </div>
-        </div>
-        <div v-else>
+        <div v-if="article.highlight.ContentB!=null">
           <div v-for="content in article.highlight.ContentB">
             <p style="color: gray;" v-html="content.substr(0, 100)"></p>
           </div>
         </div>
+        <!--<div v-if="article.highlight.ContentB==null">-->
+          <!--<div v-if="article._source.ContentB!=null">-->
+            <!--<p style="color: gray;">{{article._source.ContentB.substr(0, 100)}}</p>-->
+          <!--</div>-->
+        <!--</div>-->
+        <!--<div v-else>-->
+          <!--<div v-for="content in article.highlight.ContentB">-->
+            <!--<p style="color: gray;" v-html="content.substr(0, 100)"></p>-->
+          <!--</div>-->
+        <!--</div>-->
 
       </div>
 

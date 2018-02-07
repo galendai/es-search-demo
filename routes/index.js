@@ -22,15 +22,29 @@ router.get('/search', function(req, res, next) {
         index:'articles-*',
         type:'magazine',
         body: {
+            "indices_boost": {
+                "articles-201*": 2,
+                "articles-200*": 1.66,
+                "articles-199*": 1.33,
+                "articles-old": 1
+            },
             query: {
                 multi_match: {
                     query: key,
                     fields: [
-                        "Title",
-                        "ContentB"
+                        "Title^1",
+                        "ContentB^1.33"
                     ]
                 }
             },
+            "_source": [
+                "TitleID",
+                "MagazineArticleID",
+                "Title",
+                "MagazineName",
+                "Year",
+                "Issue"
+            ],
             highlight: {
                 fields: {
                     Title: { },
