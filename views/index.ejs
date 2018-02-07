@@ -15,26 +15,29 @@
 </head>
 <body>
 <div id="app">
-  <h1>文章搜索</h1>
+  <div class="container">
 
-  <div class="col-lg-6">
-    <div class="input-group">
-      <input type="search" class="form-control" placeholder="search something..." v-model="searchKey"  @keyup.enter="searchSomething(searchKey)">
-      <span class="input-group-btn">
+    <h1>文章搜索</h1>
+
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="input-group">
+          <input type="search" class="form-control" placeholder="search something..." v-model="searchKey"  @keyup.enter="searchSomething(searchKey)">
+          <span class="input-group-btn">
         <button class="btn btn-default" type="button" @click.prevent="searchSomething(searchKey)">Search!</button>
       </span>
+        </div>
+      </div>
+      <div class="col-lg-12" style="height: 40px;text-align: center;">
+        <img v-show="isLoading" style="height: 40px;text-align: center;" src="/images/loading.png">
+      </div>
+      <div class="col-lg-12" style="height: 20px;">
+        共有 {{articles.total}} 个搜索结果
+      </div>
     </div>
-  </div>
-  <div style="height: 40px;text-align: center;">
-    <img v-show="isLoading" style="height: 40px;text-align: center;" src="/images/loading.png">
-  </div>
-  <div style="height: 20px;">
-    共有 {{articles.total}} 个搜索结果
-  </div>
 
-  <div class="container">
     <div class="row">
-      <div v-for="article in articles.hits">
+      <div class="col-lg-12" v-for="article in articles.hits">
 
         <div>
           <div v-if="article.highlight.Title==null">
