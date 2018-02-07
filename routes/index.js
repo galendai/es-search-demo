@@ -19,7 +19,7 @@ router.get('/search', function(req, res, next) {
     }
 
     article.es.search({
-        index:'articles',
+        index:'articles-*',
         type:'magazine',
         body: {
             query: {
