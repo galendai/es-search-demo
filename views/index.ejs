@@ -127,16 +127,19 @@
             },
             pageNoClick: function (pageNum) {
                 var that = this
+                that.isLoading = true
+                document.body.scrollTop = document.documentElement.scrollTop = 0;
                 axios.get(`/search?key=${this.searchKey}&page=${pageNum - 1}`)
                     .then(function (response) {
                         console.log(response);
                         that.pageNo = pageNum - 1
                         that.pageCount = Math.ceil(response.data.total / 20)
                         that.articles = response.data;
-                        document.body.scrollTop = document.documentElement.scrollTop = 0;
+                        that.isLoading = false
                     })
                     .catch(function (error) {
                         console.log(error);
+                        that.isLoading = false
                     });
             }
         }
