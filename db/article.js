@@ -390,7 +390,7 @@ const importer = async function () {
     console.log('@数据量:', total)
     console.log('@分页数:', page)
 
-    for (let i = 1; i <= 1; i += 1) {
+    for (let i = 1; i <= page; i += 1) {
         console.log(`开始处理第 ${ i } 页...`)
         try {
             const res = await magazineArticles(i)
