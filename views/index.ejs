@@ -25,12 +25,16 @@
       </span>
     </div>
   </div>
-  <div style="height: 60px;">
+  <div style="height: 40px;text-align: center;">
+    <img v-show="isLoading" style="height: 40px;text-align: center;" src="/images/loading.png">
+  </div>
+  <div style="height: 20px;">
+    共有 {{articles.total}} 个搜索结果
   </div>
 
   <div class="container">
     <div class="row">
-      <div v-for="article in articles">
+      <div v-for="article in articles.hits">
 
         <div>
           <div v-if="article.highlight.Title==null">
@@ -52,19 +56,19 @@
           </div>
         </div>
         <!--<div v-if="article.highlight.ContentB==null">-->
-          <!--<div v-if="article._source.ContentB!=null">-->
-            <!--<p style="color: gray;">{{article._source.ContentB.substr(0, 100)}}</p>-->
-          <!--</div>-->
+        <!--<div v-if="article._source.ContentB!=null">-->
+        <!--<p style="color: gray;">{{article._source.ContentB.substr(0, 100)}}</p>-->
+        <!--</div>-->
         <!--</div>-->
         <!--<div v-else>-->
-          <!--<div v-for="content in article.highlight.ContentB">-->
-            <!--<p style="color: gray;" v-html="content.substr(0, 100)"></p>-->
-          <!--</div>-->
+        <!--<div v-for="content in article.highlight.ContentB">-->
+        <!--<p style="color: gray;" v-html="content.substr(0, 100)"></p>-->
+        <!--</div>-->
         <!--</div>-->
 
       </div>
 
-      <div v-if="articles.length>0">
+      <div v-if="articles.hits!=null && articles.hits.length>0">
         <paginate
                 :page-count="pageCount"
                 :force-page="pageNo"
@@ -85,12 +89,14 @@
         data: function () {
             return {
                 searchKey: '',
-                articles: [],
+                articles: new Object(),
                 pageNo: 0,
-                pageCount: 1
+                pageCount: 1,
+                isLoading: false
             }
         },
         created: function () {
+            this.articles.total = 0;
             this.searchKey = this.getUrlKey('key') || ''
             if(this.searchKey!=''){
                 this.searchSomething(this.searchKey)
@@ -99,14 +105,17 @@
         methods: {
             searchSomething (str) {
                 var that = this
+                that.isLoading = true
                 axios.get(`/search?key=${str}&page=${this.getUrlKey('page') || 0}`)
                     .then(function (response) {
                         console.log(response);
                         that.pageNo = (that.getUrlKey('page') || 0)
                         that.pageCount = Math.ceil(response.data.total / 20)
-                        that.articles = response.data.hits;
+                        that.articles = response.data;
+                        that.isLoading = false
                     })
                     .catch(function (error) {
+                        that.isLoading = false
                         console.log(error);
                     });
             },
@@ -120,7 +129,7 @@
                         console.log(response);
                         that.pageNo = pageNum - 1
                         that.pageCount = Math.ceil(response.data.total / 20)
-                        that.articles = response.data.hits;
+                        that.articles = response.data;
                         document.body.scrollTop = document.documentElement.scrollTop = 0;
                     })
                     .catch(function (error) {
