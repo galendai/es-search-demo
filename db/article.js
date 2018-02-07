@@ -10,10 +10,10 @@ const sequelize = new Sequelize('mssql://dragon:dragon@192.168.0.5:1433/DragonIS
         // instanceName:'DEV'
     }  //设置MSSQL超时时间
 });
-var username = 'kibana'
-var password = 'bG&kLHEPz1uLegzkoYPk'
+var username = 'elastic'
+var password = 'xHQ8ODyjoGk~EK_NIzOv'
 const client = new es.Client({
-    host: 'localhost:9200',
+    host: '192.168.15.28:9201',
     httpAuth: `${username}:${password}`,
     // log: 'trace'
 });
