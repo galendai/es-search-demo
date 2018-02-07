@@ -3,17 +3,17 @@ const Op = require('sequelize').Op
 const operatorsAliases = {}
 const es = require('elasticsearch');
 
-const sequelize = new Sequelize('mssql://dragon:dragon@192.168.0.5:1433/DragonISS', {
+const sequelize = new Sequelize(process.env.SQLSERVER || 'mssql://dragon:dragon@192.168.0.5:1433/DragonISS', {
     operatorsAliases,logging:false,
     dialectOptions:{
         requestTimeout: 999999,
         // instanceName:'DEV'
     }  //设置MSSQL超时时间
 });
-var username = 'elastic'
-var password = 'xHQ8ODyjoGk~EK_NIzOv'
+var username = process.env.ESUSER || ''
+var password = process.env.ESNAME || ''
 const client = new es.Client({
-    host: '192.168.15.28:9201',
+    host: process.env.ESHOST || 'localhost:9200',
     httpAuth: `${username}:${password}`,
     // log: 'trace'
 });
