@@ -46,14 +46,14 @@ router.get('/search', function(req, res, next) {
                     ]
                 }
             },
-            "_source": [
-                "TitleID",
-                "MagazineArticleID",
-                "Title",
-                "MagazineName",
-                "Year",
-                "Issue"
-            ],
+            // "_source": [
+            //     "TitleID",
+            //     "MagazineArticleID",
+            //     "Title",
+            //     "MagazineName",
+            //     "Year",
+            //     "Issue"
+            // ],
             highlight: {
                 fields: {
                     Title: { },
