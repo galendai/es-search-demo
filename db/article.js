@@ -361,7 +361,7 @@ const importer = async function () {
             query = `
                 SELECT
                 TOP ${limit}
-                [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue]
+                [TitleID], [MagazineArticleID], [Title], [ContentB], [MagazineName], [Year], [Issue], [Content]
                 FROM [MagazineArticle]
                 where [MagazineArticleID] < (SELECT MIN([MagazineArticleID]) FROM (SELECT TOP ${start} [MagazineArticleID]
                               FROM [MagazineArticle]
