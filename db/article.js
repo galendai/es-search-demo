@@ -20,9 +20,274 @@ const client = new es.Client({
     // log: 'trace'
 });
 
+const sequelize_mysql = new Sequelize('mysql://dragon:dragon@localhost:3306/DragonISS', {
+    operatorsAliases,logging:false,
+    dialectOptions:{
+        requestTimeout: 999999,
+        // instanceName:'DEV'
+    }  //设置MSSQL超时时间
+});
+const article = sequelize_mysql.define('MagazineArticle', {
+    MagazineArticleID: {
+        type: Sequelize.INTEGER,
+        allowNull: true
+    },
+    TitleID: {
+        type: Sequelize.STRING,
+        allowNull: true
+    },
+    MagazineName: {
+        type: Sequelize.STRING,
+        allowNull: true
+    },
+    Year: {
+        type: Sequelize.INTEGER,
+        allowNull: true
+    },
+    Issue: {
+        type: Sequelize.INTEGER,
+        allowNull: true
+    },
+    Title: {
+        type: Sequelize.STRING,
+        allowNull: true,
+    },
+    Content: {
+        type: Sequelize.TEXT,
+        allowNull: true
+    },
+    ContentB: {
+        type: Sequelize.TEXT,
+        allowNull: true
+    },
+}, {
+    timestamps: false,
+    tableName: 'MagazineArticle',
+});
+article.removeAttribute('id');
+
 const test = async function () {
 
+    const total = await countMagazineArticlesAsync()
+    const page = Math.ceil(total / limit)
+    console.log('@数据量:', total)
+    console.log('@分页数:', page)
 
+    for (let i = 1; i <= page; i += 1) {
+        console.log(`开始处理第 ${ i } 页...`)
+        try {
+            const res = await magazineArticlesAsync(i)
+            for (const doc of res[0]) {
+                try {
+                    var queryInsert =
+                        `
+                            INSERT INTO MagazineArticle 
+                            (TitleID, MagazineArticleID, Title, ContentB, Content, MagazineName, Year, Issue) 
+                            VALUES 
+                            ("${doc.TitleID}", "${doc.MagazineArticleID}", "${doc.Title}", "${doc.ContentB}", 
+                            "${doc.Content}", "${doc.MagazineName}", "${doc.Year}", "${doc.Issue}")
+                        `
+                    await article.create({
+                        MagazineArticleID: doc.MagazineArticleID,
+                        TitleID: doc.TitleID,
+                        Title: doc.Title,
+                        ContentB: doc.ContentB,
+                        Content: doc.Content,
+                        MagazineName: doc.MagazineName,
+                        Year: doc.Year,
+                        Issue: doc.Issue,
+                    })
+                } catch (err) {
+                    console.log(err)
+                }
+            }
+        } catch (err) {
+            console.log(err)
+        }
+        console.log(`第 ${ i } 页处理完毕`)
+    }
+
+    console.log('@End')
+
+    process.exit()
+
+    // var isIndexExistsOld = await client.indices.exists({index: `articles-old`});
+    // if(!isIndexExistsOld){
+    //     client.indices.create({
+    //         index: 'articles-old',
+    //         body: {
+    //             mappings: {
+    //                 magazine: {
+    //                     // "_source": {
+    //                     //     "enabled": false
+    //                     // },
+    //                     properties: {
+    //                         TitleID: {
+    //                             type: "text",
+    //                         },
+    //                         MagazineArticleID: {
+    //                             type: "text",
+    //                         },
+    //                         Title: {
+    //                             type: "text",
+    //                             // "store": true,
+    //                             analyzer: "ik_smart",
+    //                             search_analyzer: "ik_smart",
+    //                         },
+    //                         ContentB: {
+    //                             type: "text",
+    //                             // "store": true,
+    //                             analyzer: "ik_smart",
+    //                             search_analyzer: "ik_smart",
+    //                         },
+    //                         MagazineName: {
+    //                             type: "text",
+    //                         },
+    //                         Year: {
+    //                             type: "text",
+    //                         },
+    //                         Issue: {
+    //                             type: "text",
+    //                         },
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     });
+    // }
+    //
+    // var isIndexExistsNew = await client.indices.exists({index: `articles-new`});
+    // if(!isIndexExistsNew){
+    //     client.indices.create({
+    //         index: 'articles-new',
+    //         body: {
+    //             mappings: {
+    //                 magazine: {
+    //                     // "_source": {
+    //                     //     "enabled": false
+    //                     // },
+    //                     properties: {
+    //                         TitleID: {
+    //                             type: "text",
+    //                             index: false,
+    //                         },
+    //                         MagazineArticleID: {
+    //                             type: "text",
+    //                             index: false,
+    //                         },
+    //                         Title: {
+    //                             type: "text",
+    //                             // "store": true,
+    //                             analyzer: "ik_smart",
+    //                             search_analyzer: "ik_smart",
+    //                         },
+    //                         ContentB: {
+    //                             type: "text",
+    //                             // "store": true,
+    //                             analyzer: "ik_smart",
+    //                             search_analyzer: "ik_smart",
+    //                         },
+    //                         MagazineName: {
+    //                             type: "text",
+    //                             index: false,
+    //                         },
+    //                         Year: {
+    //                             type: "text",
+    //                             index: false,
+    //                         },
+    //                         Issue: {
+    //                             type: "text",
+    //                             index: false,
+    //                         },
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     });
+    // }
+    //
+    // var isIndexExistsSmall = await client.indices.exists({index: `articles-small`});
+    // if(!isIndexExistsSmall){
+    //     client.indices.create({
+    //         index: 'articles-small',
+    //         body: {
+    //             mappings: {
+    //                 magazine: {
+    //                     "_source": {
+    //                         "enabled": false
+    //                     },
+    //                     properties: {
+    //                         Title: {
+    //                             type: "text",
+    //                             "store": true,
+    //                             analyzer: "ik_smart",
+    //                             search_analyzer: "ik_smart",
+    //                         },
+    //                         ContentB: {
+    //                             type: "text",
+    //                             "store": true,
+    //                             analyzer: "ik_smart",
+    //                             search_analyzer: "ik_smart",
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     });
+    // }
+    //
+    // const res = await magazineArticlesAsync(2)
+    //
+    // for (const doc of res[0]){
+    //
+    //     if (doc.ContentB==null && doc.Content!=null){
+    //         doc.ContentB = doc.Content.replace(/<[^>]*>|/g,"")
+    //             .replace(/[\ |\~|\`|\!|\@|\#|\$|\%|\^|\&|\*|\(|\)|\-|\_|\+|\=|\||\\|\[|\]|\{|\}|\;|\:|\"|\'|\,|\<|\.|\>|\/|\?|\，|\。|\：|\“|\？|\”|\！|\（|\）|\；]/g,"")
+    //             .replace(/\s/g, "").replace(/\r/g, "").replace(/\n/g, "");
+    //     }
+    //
+    //     await client.create({
+    //         index: 'articles-old',
+    //         type: 'magazine',
+    //         id: doc.TitleID,
+    //         body: {
+    //             TitleID: doc.TitleID,
+    //             MagazineArticleID: doc.MagazineArticleID,
+    //             Title: doc.Title,
+    //             ContentB: doc.ContentB,
+    //             MagazineName: doc.MagazineName,
+    //             Year: doc.Year,
+    //             Issue: doc.Issue,
+    //         },
+    //     })
+    //
+    //     await client.create({
+    //         index: 'articles-new',
+    //         type: 'magazine',
+    //         id: doc.TitleID,
+    //         body: {
+    //             TitleID: doc.TitleID,
+    //             MagazineArticleID: doc.MagazineArticleID,
+    //             Title: doc.Title,
+    //             ContentB: doc.ContentB,
+    //             MagazineName: doc.MagazineName,
+    //             Year: doc.Year,
+    //             Issue: doc.Issue,
+    //         },
+    //     })
+    //
+    //     await client.create({
+    //         index: 'articles-small',
+    //         type: 'magazine',
+    //         id: doc.TitleID,
+    //         body: {
+    //             Title: doc.Title,
+    //             ContentB: doc.ContentB,
+    //         },
+    //     })
+    // }
+    //
+    // process.exit()
 }
 
 const importer = async function () {
